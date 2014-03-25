@@ -1,6 +1,7 @@
 var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
+var bcrypt = require('bcrypt-nodejs');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -88,6 +89,33 @@ app.post('/links', function(req, res) {
 app.get('/login', function(req, res) {
   res.render('login');
 });
+
+app.post('/login', function (req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+  //get the hashed password from the database for the entered username
+  Users.query().where({'user_name': username}).select()
+  .then(function(err, model){
+    //hash the entered password
+    if(model === undefined) res.redirect('/signup');
+
+    var hashedWord = model.get('pass_word');
+    console.log('Hashedword is: ', hashedWord);
+
+    bcrypt.genSalt(10, function(err, salt) {
+      bcrypt.hash(password, salt, function(err, hash) {
+        console.log('Stored password hash: ', hash);
+        if (hash === hashedWord) {
+          console.log('IT WORKED?!');
+        } else {
+          res.send('Bad user/pass');
+        }
+      });
+    });
+  });
+
+});
+
 
 app.get('/signup', function(req, res) {
   res.render('signup');
