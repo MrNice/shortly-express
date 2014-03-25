@@ -11,15 +11,30 @@ var Click = require('./app/models/click');
 
 var app = express();
 
+/************************************************************/
+// Use Restrictor Errywhere
+/************************************************************/
+
+var restrictor = function(req, res, next) {
+  if (req.session.user) {
+    next();
+  } else {
+    req.session.error = 'Access denied!';
+    res.redirect('/login');
+  }
+};
+
 app.configure(function() {
   app.set('views', __dirname + '/views');
   app.set('view engine', 'ejs');
   app.use(partials());
-  app.use(express.bodyParser())
+  app.use(express.bodyParser());
+  app.use(express.cookieParser('kennyloggins'));
+  app.use(express.session());
   app.use(express.static(__dirname + '/public'));
 });
 
-app.get('/', function(req, res) {
+app.get('/', restrictor, function(req, res) {
   res.render('index');
 });
 
@@ -30,7 +45,7 @@ app.get('/create', function(req, res) {
 app.get('/links', function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
-  })
+  });
 });
 
 app.post('/links', function(req, res) {
@@ -70,7 +85,13 @@ app.post('/links', function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
+app.get('/login', function(req, res) {
+  res.render('login');
+});
 
+app.get('/signup', function(req, res) {
+  res.render('signup');
+});
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail

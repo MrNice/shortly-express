@@ -37,10 +37,4 @@ window.Shortly = Backbone.View.extend({
     .filter('.' + routeName)
     .addClass('selected');
   }
-  updateNav: function(routeName){
-    this.$el.find('.navigation li a')
-    .removeClass('selected')
-    .filter('.' + routeName)
-    .addClass('selected');
-  }
 });
