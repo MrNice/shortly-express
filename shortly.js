@@ -59,7 +59,7 @@ app.post('/links', function(req, res) {
 
   new Link({ url: uri }).fetch().then(function(found) {
     if (found) {
-      res.send(200, found.attributes);
+      return res.send(200, found.attributes);
     } else {
       util.getUrlTitle(uri, function(err, title) {
         if (err) {
@@ -75,7 +75,7 @@ app.post('/links', function(req, res) {
 
         link.save().then(function(newLink) {
           Links.add(newLink);
-          res.send(200, newLink);
+          return res.send(200, newLink);
         });
       });
     }
@@ -116,22 +116,26 @@ app.post('/signup', function (req, res) {
   //get the hashed password from the database for the entered username
   new User({'username':username, 'password':password}).fetch().then(function(found) {
     if(found) {
-      res.send(200, found.attributes);
+      res.send(402, found.attributes);
       console.log('redirecting to login');
-      res.redirect('/login');
     } else {
       var user = new User({
-        'username': username,
-        'password': password
+        username: req.body.username,
+        password: req.body.password
       });
 
       user.save().then(function(newUser) {
-        Users.add(newUser);
         console.log(newUser);
+        Users.add(newUser);
         res.send(200, newUser);
-        res.redirect('/');
+      }).catch(function(err) {
+        console.log('Save err: ', arguments);
+        res.send(404);
       });
     }
+  }).catch(function(err) {
+    console.log('Fetch err: ', err);
+    res.send(404);
   });
 });
 
