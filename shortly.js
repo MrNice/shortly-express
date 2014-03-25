@@ -93,32 +93,46 @@ app.get('/login', function(req, res) {
 app.post('/login', function (req, res) {
   var username = req.body.username;
   var password = req.body.password;
-  //get the hashed password from the database for the entered username
-  Users.query().where({'user_name': username}).select()
-  .then(function(err, model){
-    //hash the entered password
-    if(model === undefined) res.redirect('/signup');
-
-    var hashedWord = model.get('pass_word');
-    console.log('Hashedword is: ', hashedWord);
-
-    bcrypt.genSalt(10, function(err, salt) {
-      bcrypt.hash(password, salt, function(err, hash) {
-        console.log('Stored password hash: ', hash);
-        if (hash === hashedWord) {
-          console.log('IT WORKED?!');
-        } else {
-          res.send('Bad user/pass');
-        }
-      });
-    });
+  //get the hashed password from the database for the entered username__
+   new User({'username':username, 'password':password}).fetch().then(function(found) {
+    if(found) {
+      res.send(200, found.attributes);
+      res.redirect('/');
+    } else {
+      console.log('redirecting to signup');
+      res.redirect('/signup');
+    }
   });
-
 });
 
 
 app.get('/signup', function(req, res) {
   res.render('signup');
+});
+
+app.post('/signup', function (req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+  //get the hashed password from the database for the entered username
+  new User({'username':username, 'password':password}).fetch().then(function(found) {
+    if(found) {
+      res.send(200, found.attributes);
+      console.log('redirecting to login');
+      res.redirect('/login');
+    } else {
+      var user = new User({
+        'username': username,
+        'password': password
+      });
+
+      user.save().then(function(newUser) {
+        Users.add(newUser);
+        console.log(newUser);
+        res.send(200, newUser);
+        res.redirect('/');
+      });
+    }
+  });
 });
 
 /************************************************************/
@@ -140,7 +154,7 @@ app.get('/*', function(req, res) {
         db.knex('urls')
           .where('code', '=', link.get('code'))
           .update({
-            visits: link.get('visits') + 1,
+            visits: link.get('visits') + 1
           }).then(function() {
             return res.redirect(link.get('url'));
           });
