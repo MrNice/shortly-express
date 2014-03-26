@@ -94,8 +94,12 @@ app.post('/login', function (req, res) {
   var username = req.body.username;
   var password = req.body.password;
   //get the hashed password from the database for the entered username__
-   new User({'username':username, 'password':password}).fetch().then(function(found) {
+   new User({'username':username).fetch().then(function(found) {
     if(found) {
+      if(found.comparePass(password)){
+        // Make a session
+        //found.makeSession(req, found.username)
+      }
       res.send(200, found.attributes);
       res.redirect('/');
     } else {
@@ -115,27 +119,23 @@ app.post('/signup', function (req, res) {
   var password = req.body.password;
   //get the hashed password from the database for the entered username
   new User({'username':username, 'password':password}).fetch().then(function(found) {
+
     if(found) {
       res.send(402, found.attributes);
       console.log('redirecting to login');
+      res.redirect('/signup');
     } else {
-      var user = new User({
-        username: req.body.username,
-        password: req.body.password
-      });
+      // var user = new User({
+      //   username: req.body.username,
+      //   password: req.body.password
+      // });
 
-      user.save().then(function(newUser) {
-        console.log(newUser);
-        Users.add(newUser);
-        res.send(200, newUser);
-      }).catch(function(err) {
-        console.log('Save err: ', arguments);
-        res.send(404);
+      Users.create().then(function(newUser) {
+      // user.save().then(function(newUser) {
+      //   Users.add(newUser);
+      //   res.send(200, newUser);
       });
     }
-  }).catch(function(err) {
-    console.log('Fetch err: ', err);
-    res.send(404);
   });
 });
 
